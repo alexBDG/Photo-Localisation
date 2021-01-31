@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    
+    <p>Interface permettant l'extraction des données de localisation de vos photos.</p>
+    <br>
+    
+    <br>
+    
+    <h2>Le logiciel :</h2>
+    
+    <p>Vous avez à renseigner une image ou un dossier contenant des images (ou d'autres dossier d'images). Ensuite une carte sera générée.</p>
+    
+    
+    <form action="/directory/" method="post"> 
+        
+        <div class="player">
+            <label for="path">Chemin vers les images :</label>
+        </div>
+        
+        <div class="submit">
+            <input type="submit"/>
+            <input type="reset"/>
+        </div>
+        
+    </form>
+        
+    <form action="/result/" method="post"> 
+        
+        <div class="player">
+            <label for="path">Lancement :</label>
+            <input type="text" id="path" name="path" value="{{ path }}" required/>
+        </div>
+
+        <div class="submit">
+            <input type="submit"/>
+            <input type="reset"/>
+        </div>
+        
+    </form>
+    
+{% endblock %}
+ 
