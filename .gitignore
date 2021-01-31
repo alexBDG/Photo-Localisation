@@ -1,0 +1,15 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+.ipynb_checkpoints/
+
+# results directory
+results/
+
+# tests directory
+test/
+
+# Sphinx documentation
+docs/_build/
+
+# Result when saving cProfile info
+profile.txt
