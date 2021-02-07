@@ -64,7 +64,7 @@ class Environment:
 
 
 
-def add_markers(m, data, env, width=300):
+def add_markers(m, data, env, width=300, thread=None):
     """Ajoute un marqueur sur la carte. Chaque marqueur est placé à l'endroit
     où la photo a été prise, et une miniature est ajoutée lorsque l'utilisateur
     clic dessus.
@@ -82,6 +82,9 @@ def add_markers(m, data, env, width=300):
         
     width : int, default=300
         Taille des miniatures d'images.
+        
+    thread : threading object or None, default=None
+        Thread executant cette fonction dans le cas de déploiement web.
 
     Returns
     -------
@@ -99,6 +102,12 @@ def add_markers(m, data, env, width=300):
     html = '<img src="data:image/png;base64,{0}">'.format
 
     for i in tqdm(range(len(data))):
+        
+        if thread is not None:
+            # (len(data) - 1) --> en principe
+            # Mais on veut que pour arriver à 100%, l'écriture du fichier soit
+            # finie
+            thread.progress = 100 * i / ( len(data) )
 
         # Redimentionnement de l'image et enregistrement temporaire
         img = Image.open(data.iloc[i]['path'])
@@ -140,7 +149,8 @@ def add_markers(m, data, env, width=300):
 
 def create_map(pictures_path=r"C:\\Users\\alspe\\Pictures\\2020\\06-2020",
                result_name='carte_geolocalisation_photos',
-               saving_path=None):
+               saving_path=None,
+               thread=None):
     """Crée une projection géographique dans laquelle des images sont ajoutées
     selon leur données de géolocalisation.
 
@@ -152,6 +162,9 @@ def create_map(pictures_path=r"C:\\Users\\alspe\\Pictures\\2020\\06-2020",
     saving_path : str or None, default=None
         Nom du dossier d'enregistrement de la carte. Si non renseigné, la carte
         sera enregistrée par défaut dans le dossier `'results'`.
+        
+    thread : threading object or None, default=None
+        Thread executant cette fonction dans le cas de déploiement web.
     """
     
     # Info
