@@ -13,3 +13,5 @@ docs/_build/
 
 # Result when saving cProfile info
 profile.txt
+
+app/templates/carte*.html
