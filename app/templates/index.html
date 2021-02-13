@@ -33,84 +33,92 @@
     
     <br>
     
-    <br>
-    
-    <form action="/result/" method="post"> 
+    <br> 
         
-        <h3>Recherche : </h3>
-        
-        {% if path %}
-            <p> &#10148; {{ path }} </p>
-        {% else %}
-            <p> &#10148; <i>Aucun dossier selectionné !</i> </p>
-        {% endif %}
-        
-        <input for="path" name="path" style="display: none;" value="{{ path }}"/>
-        <div class="form-submit-button">
-            <input type="submit" value="C'est parti !"/>
-        </div>
-        
-    </form>
-    
-    
-    <head>
-    </head>
-    
+    <h3>Recherche : </h3>
     
     {% if path %}
+    
         <div class="container">
         
-            <script>
-                alert("final");
-                function check_progress() {
-                    function worker() {
-                        $.get('progress/1', function(data) {
-                            if (progress < 100) {
-                                $('.progress-bar').css('width', event.data + '%').attr('aria-valuenow', event.data);
-                                $('.progress-bar-label').text(event.data+'%');
-                                setTimeout(worker, 10)
-                            }
-                        })
-                    }
-                }
-            </script>
-            
-            <body onload="check_progress();">
-            
-    <!--
-            <script>
-                var source = new EventSource("/result");
-                eventSource.onopen = function () {
-                  console.log("Sse connection opened");
-                };
-                eventSource.onerror = function () {
-                  console.log("error occured");
-                };
-                eventSource.onmessage = function (event) {
-                  console.log("received");
-                };
-                source.onmessage = function(event) {
-                    $('.progress-bar').css('width', event.data + '%').attr('aria-valuenow', event.data);
-                    $('.progress-bar-label').text(event.data+'%');
-                    if(event.data == 100){
-            			source.close()
-            		}
-                }
-            </script>
-            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-    //-->
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
             <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style_progress_bar.css') }}">
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        
+            <script>
             
-            <div class="progress">
-                <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
-                    <span class="progress-bar-label">0%</span>
+                $(document).ready(function() {
+                    $('#sample_form').on('submit', function(event) {
+                        event.preventDefault();
+                        var count_error = 0;
+                        
+                        if(count_error == 0) {
+                            $.ajax( {
+                                url:"/result/",
+                                method:"POST",
+                                data:$(this).serialize(),
+                                beforeSend:function() {
+                                    $('#launch').attr('disabled', 'disabled');
+                                    $('#process').css('display', 'block');
+                                },
+                                success:function(data) { 
+                                    var percentage = 0;
+                                    var timer = setInterval(function() {
+                                        $.get("/progress/0", function(percentage, status) {
+                                            progress_bar_process(percentage, timer, data);
+                                        } );
+                                    }, 100);
+                                }
+                            } )
+                        }
+                 
+                    });
+                
+                    function progress_bar_process(percentage, timer, data) {
+                        $('.progress-bar').css('width', percentage + '%');
+                        if(percentage == 100) {
+                            clearInterval(timer);
+                            $('#process').css('display', 'none');
+                            $('.progress-bar').css('width', '0%');
+                            $('#launch').attr('disabled', false);
+                            $('#success_message').html(data);
+                            setTimeout(function() {
+                                $('#success_message').html('');
+                            }, 5000);
+                        }
+                    }
+                    
+                });
+                
+            </script>
+                
+        
+            <p> &#10148; {{ path }} </p>
+            
+                
+    
+            <form action="/result/" method="post" id="sample_form">
+                <input for="path" name="path" id="path" style="display:none;" value="{{ path }}"/>
+                <div class="form-submit-button" align="center">
+                    <input type="submit" id="launch" value="C'est parti !"/>
+                </div>
+            </form>
+    
+            <span id="success_message"></span>
+            
+            <div class="form-group" id="process" style="display:none;">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped active bg-success" role="progressbar" aria-valuemin="0" aria-valuemax="100" style=""></div>
                 </div>
             </div>
+        
         </div>
+        
+    {% else %}
+    
+        <p> &#10148; <i>Aucun dossier selectionné !</i> </p>
+        
     {% endif %}
-
     
 {% endblock %}
  

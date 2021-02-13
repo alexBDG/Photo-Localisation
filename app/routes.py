@@ -6,11 +6,9 @@ Created on Sun Jan 31 20:48:21 2021
 """
 
 import os
-import time
-import random
 import threading
 
-from flask import render_template, request, Response
+from flask import render_template, request, jsonify
 
 from tkinter import Tk
 from tkinter.filedialog import askdirectory
@@ -24,6 +22,26 @@ HTML_BASE_TOP = """{% extends 'base.html' %}
 
 {% block content %}
 
+<!DOCTYPE html>
+<head>    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    
+        <script>
+            L_NO_TOUCH = false;
+            L_DISABLE_3D = false;
+        </script>
+    
+    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
+    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
 """
 HTML_BASE_BOTTOM = """
     
@@ -36,7 +54,7 @@ SAVING_PATH = os.path.join(app.root_path, app.template_folder)
 RESULT_NAME = 'carte_geolocalisation_photos'
 RESULT_FILE = RESULT_NAME+'.html'
 
-EXPORTING_THREADS = {}
+EXPORTING_THREAD = None
 
 
 
@@ -47,11 +65,7 @@ class ExportingThread(threading.Thread):
         super().__init__()
 
     def run(self):
-        for i in range(100):
-            self.progress = 100 * i / ( 100 - 1 )
-            print("{:.4}%\r".format(self.progress))
-            time.sleep(0.1)
-        """
+        
         # Lance le script
         create_map(
             pictures_path = self.path,
@@ -64,8 +78,11 @@ class ExportingThread(threading.Thread):
         with open(os.path.join(SAVING_PATH, RESULT_FILE)) as f1:
             with open(os.path.join(SAVING_PATH, 'tmp.html'), "w") as f2:
                 f2.write(HTML_BASE_TOP)
+                i = 0
                 for line in f1:
-                    f2.write(line)
+                    if i>21:
+                        f2.write(line)
+                    i += 1
                 f2.write(HTML_BASE_BOTTOM)
                 
         # On supprime l'ancienne carte
@@ -76,7 +93,10 @@ class ExportingThread(threading.Thread):
             os.path.join(SAVING_PATH, 'tmp.html'), 
             os.path.join(SAVING_PATH, RESULT_FILE)
         )
-        """
+        
+        # On termine la progression
+        self.progress = 100
+        
     
     
 
@@ -97,12 +117,13 @@ def about():
 def directory():
     
     # Initialise une boite de dialogue
-    Tk().withdraw()
+    root = Tk()
+    root.attributes("-topmost", True)
+    root.withdraw()
     path = askdirectory()
     
     return render_template('index.html',
-                           path=path,
-                           progress=0)
+                           path=path)
 
 
 
@@ -120,46 +141,27 @@ def display_map():
 @app.route('/result/', methods = ['POST'])
 def result():
     
-    global EXPORTING_THREADS
+    global EXPORTING_THREAD
     
     path = request.form['path']
     
     # Lance le script
-    thread_id = random.randint(0, 10000)
-    EXPORTING_THREADS[thread_id] = ExportingThread(path)
-    EXPORTING_THREADS[thread_id].start()
-    
-    def generate_(thread):
-        x = thread.progress
-        while x <= 100:
-            yield "data:" + str(x) + "\n\n"
-            x = thread.progress
+    EXPORTING_THREAD = ExportingThread(path)
+    EXPORTING_THREAD.start()
             
-    def generate():
-        x = 0
-        while x <= 100:
-            print('generator - '+str(x))
-            yield "data:" + str(x) + "\n\n"
-            x = x + 10
-            time.sleep(0.5)
-    #return Response(generate(), mimetype= 'text/event-stream')
-    
-    return render_template('index.html',
-                           path=path,
-                           progress=0,
-                           task_id=thread_id)
-    
-    
-    #return 'task id: #%s' % thread_id
+    if request.method == 'POST':
+        msg = 'La carte a bien été créée !'    
+    return jsonify(msg)
 
 
-@app.route('/progress/<int:thread_id>')
+
+@app.route('/progress/<int:thread_id>', methods = ["POST","GET"])
 def progress(thread_id):
-    global EXPORTING_THREADS
+    global EXPORTING_THREAD
+    
+    msg = str(EXPORTING_THREAD.progress)
 
-    return str(EXPORTING_THREADS[thread_id].progress)
-
-
+    return jsonify(msg)
 
 
 

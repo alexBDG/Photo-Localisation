@@ -189,7 +189,7 @@ def create_map(pictures_path=r"C:\\Users\\alspe\\Pictures\\2020\\06-2020",
     m = folium.Map(location=[47, 1], tiles="OpenStreetMap", zoom_start=5)
     
     # On ajoute les emplacements    
-    m = add_markers(m, data, env, width=300)
+    m = add_markers(m, data, env, width=300, thread=thread)
 
     # On enregistre au format html
     print("Enregistrement de la carte ...")
